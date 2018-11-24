@@ -130,7 +130,7 @@ void grisp_spi_output (ErlDrvData drv_data, char *buf, ErlDrvSizeT len)
 
     msg.speed_hz = 100000;
     msg.delay_usecs = 1;
-    msg.bits_per_word = 8;
+    msg.bits_per_word = 12;
     msg.cs_change = 1;
     msg.rx_nbits = 0;
     msg.tx_nbits = 0;
