@@ -144,6 +144,6 @@ void grisp_spi_output (ErlDrvData drv_data, char *buf, ErlDrvSizeT len)
 
     rv = ioctl(grisp_spi_data.fd, SPI_IOC_MESSAGE(1), &msg);
     assert(rv == 0);
-
+    res = buf[0];
     driver_output(grisp_spi_data.port, res, len);
 }
