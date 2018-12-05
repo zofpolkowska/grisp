@@ -17,10 +17,15 @@
 #include "erl_driver.h"
 #include "sys.h"
 
+#include <errno.h>
+#include <string.h>
+
 #define CPOL_LOW 0
 #define CPOL_HIGH 1
 #define CPHA_LEADING 0
 #define CPHA_TRAILING 2
+
+extern int errno ;
 
 int grisp_spi_init (void);
 ErlDrvData grisp_spi_start (ErlDrvPort port, char *command);
@@ -113,13 +118,15 @@ void grisp_spi_output (ErlDrvData drv_data, char *buf, ErlDrvSizeT len)
     char cs;
     char mode;
     char res[RES_MAX_SIZE];
+    char buffer[3];
     struct spi_ioc_transfer msg;
-
+    int errnum;
     /* parse argument buffer:  <<Cs:8, Mode:8, Tx_data/binary>> */
     cs = buf[0];
     mode = buf[1];
     buf += 2;
     len -= 2;
+    printf("len = %d", len),
 
     ASSERT ((struct grisp_spi_data *)drv_data == &grisp_spi_data);
     ASSERT (grisp_spi_data.port != NULL);
@@ -134,16 +141,23 @@ void grisp_spi_output (ErlDrvData drv_data, char *buf, ErlDrvSizeT len)
     msg.cs_change = 1;
     msg.rx_nbits = 0;
     msg.tx_nbits = 0;
-
+    printf("buf[0] = %d, buf[1] = %d\n", buf[0], buf[1]);
     msg.cs = cs;
     msg.mode = ((mode & CPOL_HIGH) ? SPI_CPOL : 0) | ((mode & CPHA_TRAILING) ? SPI_CPHA : 0);
-
-    msg.tx_buf = buf;
+//    buffer[0] = buf[0];
+//    buffer[1] = buf[1];
+//    buffer[2] = buf[2];
+    msg.tx_buf= (unsigned long) buf;
     msg.rx_buf = res;
     msg.len = len;
 
     rv = ioctl(grisp_spi_data.fd, SPI_IOC_MESSAGE(1), &msg);
-    assert(rv == 0);
+    if (rv != 0){
+        errnum = errno;
+        fprintf(stderr, "Value of errno: %d\n", errno);
+        perror("Error printed by perror");
+        fprintf(stderr, "Error opening file: %s\n", strerror( errnum ));
+    }
 
     driver_output(grisp_spi_data.port, res, len);
 }
